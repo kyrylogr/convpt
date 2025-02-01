@@ -1,7 +1,7 @@
 import torch
 import torchvision.transforms.v2 as transforms
 
-from data_generator import *
+from .data_generator import *
 
 
 class SynteticTransformDataSet(torch.utils.data.Dataset):
@@ -27,7 +27,7 @@ class SynteticTransformDataSet(torch.utils.data.Dataset):
         self.size2 = size2
         self.max_shift = max_shift
         self.angle_sigma = angle_sigma
-        self.scale_sigme = scale_sigma
+        self.scale_sigma = scale_sigma
         self.rotation_center_max_shift = rotation_center_max_shift
         self.result_stride = result_stride
         self.padding = pad
@@ -45,7 +45,7 @@ class SynteticTransformDataSet(torch.utils.data.Dataset):
             self.angle_sigma,
             self.scale_sigma,
             self.rotation_center_max_shift,
-            self.pad,
+            self.padding,
         )
         img_cls, img_offsets = center_offset_encoder(
             self.size2 // self.result_stride, self.result_stride, offset

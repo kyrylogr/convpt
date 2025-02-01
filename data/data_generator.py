@@ -143,6 +143,6 @@ def center_offset_encoder(size, stride, offset_xy, sigma=2):
     offset_strided_xy = np.floor(offset_xy / stride)
     y_strided = int(offset_strided_xy[1] + hsize)
     x_strided = int(offset_strided_xy[0] + hsize)
-    draw_gaussian(cls, np.array([x_strided, y_strided]), sigma, sigma)
+    draw_gaussian(cls, np.array([x_strided, y_strided]), sigma)
     offsets[y_strided, x_strided] = offset_xy - (0.5 + offset_strided_xy) * stride
     return cls, offsets
