@@ -1,6 +1,12 @@
 import numpy as np
 import cv2 as cv
+import os
 import random
+
+
+def read_rgb(imgfilename):
+    img_org = cv.imread(imgfilename)
+    return cv.cvtColor(img_org, cv.COLOR_BGR2RGB)
 
 
 def point_transform(pt, tr):
@@ -78,3 +84,62 @@ def sample_crops_with_transform(
     crop_original = crop_at_point(img, original_center_xy, size1)
     crop_transformed = crop_at_point(dst, translated_transformed_center_xy, size2)
     return crop_original, crop_transformed, translation
+
+
+def to_grayscale(img):
+    return cv.cvtColor(img, cv.COLOR_RGB2GRAY)
+
+
+def filter_color_imgfiles_min_size(folder, minsize):
+    """returns list of imagefile paths from the folder if it satisfies minsize.
+    Currently only imagefiles should be in input folder.
+    """
+
+    def fits(fpath):
+        img = cv.imread(fpath)
+        s = img.shape
+        return len(s) == 3 and s[0] >= minsize and s[1] >= minsize
+
+    file_paths = [os.path.join(folder, fname) for fname in os.listdir(folder)]
+    return list(filter(fits, file_paths))
+
+
+def gaussian2D(shape, sigma_x=1, sigma_y=1):
+    m, n = [(ss - 1.0) / 2.0 for ss in shape]
+    y, x = np.ogrid[-m : m + 1, -n : n + 1]
+    h = np.exp(-x * x / (2 * sigma_x**2) - y * y / (2 * sigma_y**2))
+    h[h < np.finfo(h.dtype).eps * h.max()] = 0
+    return h
+
+
+def draw_gaussian(heatmap, center, radius):
+    diameter = 2 * radius + 1
+    sigma = diameter / 6
+    gaussian = gaussian2D((diameter, diameter), sigma, sigma)
+
+    x, y = int(np.round(center[0])), int(np.round(center[1]))
+
+    height, width = heatmap.shape[0:2]
+
+    left, right = min(x, radius), min(width - x, radius + 1)
+    top, bottom = min(y, radius), min(height - y, radius + 1)
+
+    masked_heatmap = heatmap[y - top : y + bottom, x - left : x + right]
+    masked_gaussian = gaussian[
+        radius - top : radius + bottom, radius - left : radius + right
+    ]
+    if min(masked_gaussian.shape) > 0 and min(masked_heatmap.shape) > 0:  # TODO debug
+        np.maximum(masked_heatmap, masked_gaussian, out=masked_heatmap)
+    return heatmap
+
+
+def center_offset_encoder(size, stride, offset_xy, sigma=2):
+    cls = np.zeros(shape=(size, size), dtype=np.float32)
+    offsets = np.zeros(shape=(size, size, 2), dtype=np.float32)
+    hsize = size // 2
+    offset_strided_xy = np.floor(offset_xy / stride)
+    y_strided = int(offset_strided_xy[1] + hsize)
+    x_strided = int(offset_strided_xy[0] + hsize)
+    draw_gaussian(cls, np.array([x_strided, y_strided]), sigma, sigma)
+    offsets[y_strided, x_strided] = offset_xy - (0.5 + offset_strided_xy) * stride
+    return cls, offsets
