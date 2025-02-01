@@ -47,6 +47,7 @@ def sample_crops_with_transform(
     angle_sigma,
     scale_sigma,
     rotation_center_max_shift,
+    center_crop=True,
     pad=8,
 ):
     """Samples two crops of specified size with second patch being random transform from original image.
@@ -65,6 +66,8 @@ def sample_crops_with_transform(
     center_pad = pad + max_size / 2
     w_h = np.array([w, h])
     original_center_range_wh = w_h - 2 * center_pad
+    if center_crop:
+        original_center_range_wh = original_center_range_wh.min()
     original_center_xy = np.round(
         w_h / 2 + original_center_range_wh * (np.random.rand(2) - 0.5)
     )
