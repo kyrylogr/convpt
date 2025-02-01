@@ -56,11 +56,11 @@ class SiamPTNet(nn.Module):
         self,
         result_stride: int = 16,
         head_channels: int = 256,
-        pre_encoder: int = True,
-        num_corr_channels: int = 64,
+        corr_channels: int = 64,
         tail_blocks: int = 3,
         backbone: str = "efficientnet_b0",
         backbone_weights: str = "DEFAULT",
+        pre_encoder: int = True
     ):
         super().__init__()
         self.backbone = create_backbone(backbone, backbone_weights)
@@ -78,14 +78,14 @@ class SiamPTNet(nn.Module):
         self.head_class = CorrelationHead(
             head_channels,
             pre_encoder,
-            num_corr_channels,
+            corr_channels,
             tail_blocks=tail_blocks,
             result_channels=1,
         )
         self.head_offset = CorrelationHead(
             head_channels,
             pre_encoder,
-            num_corr_channels,
+            corr_channels,
             tail_blocks=tail_blocks,
             result_channels=2,
         )
