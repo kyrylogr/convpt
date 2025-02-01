@@ -44,7 +44,8 @@ class SiamPTLoss(nn.Module):
         return loss / num_el
 
     def forward(self, gt_cls_offset, pred_cls, pred_offset):
-        gt_cls, gt_offset = gt_cls_offset
+        gt_cls = gt_cls_offset[:, 0, :, :]
+        gt_offset = gt_cls_offset[:, 1:, :, :]
         focal_l = self.focal_loss(gt_cls, pred_cls)
         offset_l = self.l1_loss(gt_cls.gt(0.0), gt_offset, pred_offset)
         return focal_l * self.lambda_cls + offset_l * self.lambda_offset
