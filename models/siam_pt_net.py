@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from backbones import create_backbone
-from blocks import CorrelationHead
+from .backbones import create_backbone
+from .blocks import CorrelationHead
 from typing import List
 
 # Single point tracker network
@@ -14,6 +14,7 @@ class SiamPTLoss(nn.Module):
     """Loss function for single point tracker."""
 
     def __init__(self, lambda_cls=1.0, lambda_offset=1.0):
+        super().__init__()
         self.lambda_cls = lambda_cls
         self.lambda_offset = lambda_offset
         self.delta = 1e-5
@@ -60,19 +61,17 @@ class SiamPTNet(nn.Module):
         tail_blocks: int = 3,
         backbone: str = "efficientnet_b0",
         backbone_weights: str = "DEFAULT",
-        pre_encoder: int = True
+        pre_encoder: int = True,
     ):
         super().__init__()
         self.backbone = create_backbone(backbone, backbone_weights)
-        backbone_output_block_no = [2, 4, 8, 16, 32].index(result_stride)
-        assert backbone_output_block_no >= 0
-        backbone_result_channels = self.backbone.filters_count[backbone_output_block_no]
+        self.backbone_output_block_no = [2, 4, 8, 16, 32].index(result_stride)
+        assert self.backbone_output_block_no >= 0
+        backbone_result_channels = self.backbone.filters[self.backbone_output_block_no]
         self.adjust_backbone_channels = nn.Sequential(
-            [
-                nn.Conv2d(backbone_result_channels, head_channels, stride=1),
-                nn.BatchNorm2d(head_channels),
-                nn.ReLU(),
-            ]
+            nn.Conv2d(backbone_result_channels, head_channels, kernel_size=1, stride=1),
+            nn.BatchNorm2d(head_channels),
+            nn.ReLU(),
         )
 
         self.head_class = CorrelationHead(
@@ -91,11 +90,14 @@ class SiamPTNet(nn.Module):
         )
         self.loss = SiamPTLoss()
 
+    def get_features(self, x):
+        x_f = self.backbone(x)
+        x = x_f[self.backbone_output_block_no]
+        return self.adjust_backbone_channels(x)
+
     def forward(self, z: torch.Tensor, x: torch.Tensor, gt: List[torch.Tensor] = None):
-        z = self.backbone(z)
-        x = self.backbone(x)
-        z = self.adjust_backbone_channels(z)
-        x = self.adjust_backbone_channels(x)
+        z = self.get_features(z)
+        x = self.get_features(x)
         cls = self.head_class(z, x)
         cls = torch.sigmoid(cls)
         offsets = self.head_offset(z, x)

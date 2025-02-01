@@ -14,7 +14,7 @@ class SepConv(nn.Module):
         padding=1,
         bias=False,
     ):
-        super().__init()
+        super().__init__()
         self.depthwise = nn.Conv2d(
             in_channels=in_channels,
             out_channels=in_channels,
@@ -35,17 +35,15 @@ class SepConv(nn.Module):
 
 def sepconv_bn_relu(in_channels: int, out_channels: int, kernel_size=3):
     return nn.Sequential(
-        [
-            SepConv(in_channels, out_channels, kernel_size),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(),
-        ]
+        SepConv(in_channels, out_channels, kernel_size),
+        nn.BatchNorm2d(out_channels),
+        nn.ReLU(),
     )
 
 
 def sepconv_bn_relu_times_n(in_channels: int, kernel_size: int, n: int):
     return nn.Sequential(
-        [sepconv_bn_relu(in_channels, in_channels, kernel_size) for i in range(n)]
+        *[sepconv_bn_relu(in_channels, in_channels, kernel_size) for i in range(n)]
     )
 
 
@@ -55,15 +53,15 @@ class PointwiseCorrelation(nn.Module):
     """
 
     def __init__(self):
-        super().__init()
+        super().__init__()
 
     def forward(self, z: torch.Tensor, x: torch.Tensor):
         b, _, w, h = x.size()
         z = z.flatten(2).permute(0, 2, 1)
-        result_channels = z.shape(1)
+        result_channels = z.size(1)
         x = x.flatten(2)
         corr = torch.matmul(z, x)
-        assert corr.size(2) == result_channels
+        assert corr.size(1) == result_channels
         return corr.reshape(b, result_channels, w, h)
 
 
@@ -82,7 +80,7 @@ class CorrelationHead(nn.Module):
         tail_blocks: int = 3,
         result_channels: int = 1,
     ):
-        super().__init()
+        super().__init__()
         self.pre_encoder = (
             sepconv_bn_relu(in_channels, in_channels) if pre_encoder else None
         )

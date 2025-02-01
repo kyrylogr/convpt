@@ -69,8 +69,8 @@ def calculate_loss(model, data, batch_size=32, num_workers=0):
             gt_data = gt_data.to(device)
             gt_data.requires_grad = False
 
-            loss_dict = model(img1, img2, gt=gt_data)
-            curr_loss = loss_dict["loss"].item()
+            loss = model(img1, img2, gt=gt_data)
+            curr_loss = loss.item()
             curr_count = img1.shape[0]
             loss += curr_loss * curr_count
             count += curr_count
@@ -98,16 +98,18 @@ def filter_named_values_by_prefix(
 
 
 def create_dataset(img_files, model_conf, aug_conf):
-    return SynteticTransformDataSet(img_files,
-                                    model_conf["size_template"],
-                                    model_conf["size_search"],
-                                    max_shift = aug_conf.get("max_shift", 32),
-                                    angle_sigma = aug_conf.get("angle_sigma", 2),
-                                    scale_sigma = aug_conf.get("scale_sigma", 0.025),
-                                    rotation_center_max_shift = aug_conf.get("rotation_center_max_shift", 20),
-                                    pad = aug_conf.get("margin", 12),
-                                    result_stride=model_conf["result_stride"]
-                                    )
+    return SynteticTransformDataSet(
+        img_files,
+        model_conf["size_template"],
+        model_conf["size_search"],
+        max_shift=aug_conf.get("max_shift", 32),
+        angle_sigma=aug_conf.get("angle_sigma", 2),
+        scale_sigma=aug_conf.get("scale_sigma", 0.025),
+        rotation_center_max_shift=aug_conf.get("rotation_center_max_shift", 20),
+        pad=aug_conf.get("margin", 12),
+        result_stride=model_conf["result_stride"],
+    )
+
 
 def train(model_conf, train_conf, data_conf):
     torch.manual_seed(42)
@@ -117,12 +119,12 @@ def train(model_conf, train_conf, data_conf):
     image_files = filter_color_imgfiles_min_size(data_conf["image_folder"], min_size)
     random.shuffle(image_files)
     images_count = len(image_files)
-    train_ratio = data_conf.get( "train_val_split", 0.5)
+    train_ratio = data_conf.get("train_val_split", 0.5)
     train_images_count = round(images_count * train_ratio)
     train_imagefiles = image_files[:train_images_count]
     val_imagefiles = image_files[train_images_count:]
 
-    augmentation_config = train_conf.get("data_augmentation",{})
+    augmentation_config = train_conf.get("data_augmentation", {})
     train_data = create_dataset(val_imagefiles, model_conf, augmentation_config)
     val_data = create_dataset(train_imagefiles, model_conf, augmentation_config)
 
@@ -131,9 +133,6 @@ def train(model_conf, train_conf, data_conf):
     val_subset_len = train_conf.get("val_subset_len")
     num_workers = train_conf.get("num_workers", 0)
 
-    if train_conf["is_overfit"]:
-        assert train_subset_len is not None
-        batch_size = train_subset_len
     if train_subset_len is not None:
         train_data = torch.utils.data.Subset(train_data, range(train_subset_len))
     if val_subset_len is not None:
@@ -142,13 +141,13 @@ def train(model_conf, train_conf, data_conf):
     criteria_satisfied = criteria_builder(*train_conf["stop_criteria"].values())
 
     model = SiamPTNet(
-        #filters_size=model_conf["head"]["filters_size"],
-        result_stride=model_conf["result_stride"],        
+        # filters_size=model_conf["head"]["filters_size"],
+        result_stride=model_conf["result_stride"],
         head_channels=model_conf["head"]["channels"],
         corr_channels=model_conf["head"]["corr_channels"],
         tail_blocks=model_conf["head"]["tail_blocks"],
         backbone=model_conf["backbone"]["name"],
-        backbone_weights=model_conf["backbone"]["pretrained_weights"]
+        backbone_weights=model_conf["backbone"]["pretrained_weights"],
     ).to(device)
 
     lr = train_conf["lr"]
@@ -199,7 +198,8 @@ def train(model_conf, train_conf, data_conf):
     optimizer = torch.optim.Adam(
         [
             {"params": trainable_backbone_params, "lr": lr_backbone_start},
-            {"params": model.head.parameters(), "lr": lr_head_start},
+            {"params": model.head_class.parameters(), "lr": lr_head_start},
+            {"params": model.head_offset.parameters(), "lr": lr_head_start},
         ]
     )
 
@@ -230,6 +230,7 @@ def train(model_conf, train_conf, data_conf):
                 # switch optimizer LRs
                 optimizer.param_groups[0]["lr"] = lr_backbone
                 optimizer.param_groups[1]["lr"] = lr_head
+                optimizer.param_groups[2]["lr"] = lr_head
             scheduler = create_scheduler(optimizer)
 
         for i, data in enumerate(batch_generator_train):
@@ -240,15 +241,15 @@ def train(model_conf, train_conf, data_conf):
             gt_data = gt_data.to(device)
             gt_data.requires_grad = False
 
-            loss_dict = model(img1, img2, gt=gt_data)
+            loss = model(img1, img2, gt=gt_data)
             optimizer.zero_grad()  # compute gradient and do optimize step
-            loss_dict["loss"].backward()
+            loss.backward()
 
             optimizer.step()
-            loss = loss_dict["loss"].item()
+            loss_value = loss.item()
             curr_lr = [optimizer.param_groups[0]["lr"], optimizer.param_groups[1]["lr"]]
             lr_to_show = curr_lr[0] if len(curr_lr) == 1 else curr_lr
-            print(f"Epoch {epoch}, batch {i}, loss={loss:.3f}, lr={lr_to_show}")
+            print(f"Epoch {epoch}, batch {i}, loss={loss_value:.3f}, lr={lr_to_show}")
 
         lr_backbone_history.append(curr_lr[0])
         lr_head_history.append(curr_lr[1])
@@ -267,7 +268,7 @@ def train(model_conf, train_conf, data_conf):
                     save_model(
                         model,
                         model_conf["weights_path"],
-                        tag = "_best",
+                        tag="_best",
                         backbone=model_conf["backbone"]["name"],
                     )
 
