@@ -1,4 +1,5 @@
 import torch
+import torchvision.transforms.v2 as transforms
 
 from data_generator import *
 
@@ -30,6 +31,9 @@ class SynteticTransformDataSet(torch.utils.data.Dataset):
         self.rotation_center_max_shift = rotation_center_max_shift
         self.result_stride = result_stride
         self.padding = pad
+        self.transforms = transforms.Compose(
+            [transforms.ToImage(), transforms.ToDtype(torch.float32, scale=True)]
+        )
 
     def __getitem__(self, index):
         img = read_rgb(self._filelist[index])
@@ -52,7 +56,7 @@ class SynteticTransformDataSet(torch.utils.data.Dataset):
                 torch.Tensor(img_offsets).permute(2, 0, 1),
             ]
         )
-        return img1, img2, gt
+        return self.transforms(img1), self.transforms(img2), gt
 
     def __len__(self):
         return len(self._filelist)
