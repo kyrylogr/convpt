@@ -1,8 +1,10 @@
+from typing import List
+
 import torch
 import torch.nn as nn
+
 from .backbones import create_backbone
 from .blocks import CorrelationHead
-from typing import List
 
 # Single point tracker network
 # problem statement:
@@ -36,16 +38,16 @@ class SiamPTLoss(nn.Module):
         pos_loss = torch.log(y_pred) * torch.pow(1.0 - y_pred, 2) * pos_inds
         neg_loss = torch.log(1 - y_pred) * torch.pow(y_pred, 2) * neg_weights * neg_inds
         return -(pos_loss.sum() + neg_loss.sum()) / torch.maximum(
-            pos_count, torch.oneslike(pos_count)
+            pos_count, torch.ones_like(pos_count)
         )
 
     def l1_loss(self, mask, y_true: torch.Tensor, y_pred: torch.Tensor):
         loss = (torch.abs(y_true - y_pred) * mask).sum()
-        num_el = torch.maximum(mask.sum(), torch.ones_like(mask))
-        return loss / num_el
+        num_el = mask.sum()
+        return loss / torch.maximum(num_el, torch.ones_like(num_el))
 
     def forward(self, gt_cls_offset, pred_cls, pred_offset):
-        gt_cls = gt_cls_offset[:, 0, :, :]
+        gt_cls = torch.unsqueeze(gt_cls_offset[:, 0, :, :], dim=1)
         gt_offset = gt_cls_offset[:, 1:, :, :]
         focal_l = self.focal_loss(gt_cls, pred_cls)
         offset_l = self.l1_loss(gt_cls.gt(0.0), gt_offset, pred_offset)

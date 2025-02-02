@@ -1,16 +1,16 @@
 import argparse
+import random
 import time
 from pathlib import Path
 
 import pandas as pd
-import random
 import torch
 import torchvision
 import torchvision.transforms.v2 as transforms
 
-from models.siam_pt_net import SiamPTNet
-from data.dataset import SynteticTransformDataSet
 from data.data_generator import filter_color_imgfiles_min_size
+from data.dataset import SynteticTransformDataSet
+from models.siam_pt_net import SiamPTNet
 from utils.config import load_config
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -64,17 +64,15 @@ def calculate_loss(model, data, batch_size=32, num_workers=0):
             img1, img2, gt_data = data
             img1 = img1.to(device).contiguous()
             img2 = img2.to(device).contiguous()
-            input_data = input_data.to(device).contiguous()
 
             gt_data = gt_data.to(device)
             gt_data.requires_grad = False
 
-            loss = model(img1, img2, gt=gt_data)
-            curr_loss = loss.item()
+            curr_loss = model(img1, img2, gt=gt_data)
             curr_count = img1.shape[0]
             loss += curr_loss * curr_count
             count += curr_count
-    return loss / count
+    return (loss / count).cpu().item()
 
 
 def name_fits(name, include_patterns=None, exclude_patterns=None):
@@ -140,12 +138,14 @@ def train(model_conf, train_conf, data_conf):
 
     criteria_satisfied = criteria_builder(*train_conf["stop_criteria"].values())
 
+    head_conf = model_conf["head"]
     model = SiamPTNet(
-        # filters_size=model_conf["head"]["filters_size"],
+        # filters_size=head_conf["filters_size"],
         result_stride=model_conf["result_stride"],
-        head_channels=model_conf["head"]["channels"],
-        corr_channels=model_conf["head"]["corr_channels"],
-        tail_blocks=model_conf["head"]["tail_blocks"],
+        head_channels=head_conf["channels"],
+        corr_channels=head_conf["corr_channels"],
+        pre_encoder=head_conf.get("pre_correlation_block"),
+        tail_blocks=head_conf["tail_blocks"],
         backbone=model_conf["backbone"]["name"],
         backbone_weights=model_conf["backbone"]["pretrained_weights"],
     ).to(device)

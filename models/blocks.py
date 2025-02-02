@@ -104,7 +104,7 @@ class CorrelationHead(nn.Module):
             x_corr = self.post_corr_encoder_corr(x_corr)
         if self.post_corr_encoder_feature is not None:
             x = self.post_corr_encoder_feature(x)
-        x = torch.cat([x_corr, x])
+        x = torch.cat([x_corr, x], dim=1)
         x = self.corr_unite(x)
         x = self.suffix(x)
         x = self.finish(x)
