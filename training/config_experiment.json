@@ -1,0 +1,62 @@
+{
+  "model": {
+    "weights_path": null,
+    "backbone": {
+      "name": "efficientnet_b0",
+      "pretrained_weights": "DEFAULT"
+    },
+    "head": {
+      "filters_size": [
+        256,
+        128,
+        64
+      ],
+      "pre_correlation_block": true,
+      "channels": 256,
+      "tail_blocks": 3,
+      "corr_channels": 144,
+      "offset_activation": "tanh"
+    },
+    "size_template": 192,
+    "size_search": 256,
+    "result_stride": 16
+  },
+  "train": {
+    "lr": 2e-2,
+    "lr_backbone": 2e-2,
+    "lr_head": 2e-2,
+    "lr_head_pretrain": 2e-2,
+    "head_pretrain_epochs": 50,
+    "backbone_trainable_params_patterns_include": null,
+    "backbone_trainable_params_patterns_exclude": [
+    ],
+    "batch_size": 32,
+    "subset_len": null,
+    "val_subset_len": null,
+    "calculate_epoch_loss": true,
+    "num_workers": 8,
+    "data_augmentation": {
+      "max_shift": 20,
+      "angle_sigma": 2,
+      "scale_sigma": 0.03,
+      "rotation_center_max_shift": 16,
+      "result_stride": 15,
+      "margin": 8,
+      "random_flip_horizontal": false
+    },
+    "lr_schedule": {
+      "patience": 3,
+      "factor": 0.2,
+      "min_lr": 1e-5
+    },
+    "stop_criteria": {
+      "loss": null,
+      "epoch": 100
+    }
+  },
+  "data": {
+    "image_folder": "../VOC/VOCdevkit/VOC2007/JPEGImages",
+    "train_val_split": 0.8,
+    "image_minsize": 330
+  }
+}
