@@ -11,9 +11,11 @@
         128,
         64
       ],
+      "pre_correlation_block": true,
       "channels": 256,
       "tail_blocks": 3,
-      "corr_channels": 96      
+      "corr_channels": 144,
+      "offset_activation": "tanh"
     },
     "size_template": 192,
     "size_search": 256,
@@ -21,10 +23,10 @@
   },
   "train": {
     "lr": 2e-2,
-    "lr_backbone": 1e-2,
-    "lr_head": 1e-2,
-    "lr_head_pretrain": 1.5e-2,
-    "head_pretrain_epochs": 80,
+    "lr_backbone": 2e-2,
+    "lr_head": 2e-2,
+    "lr_head_pretrain": 2e-2,
+    "head_pretrain_epochs": 50,
     "backbone_trainable_params_patterns_include": null,
     "backbone_trainable_params_patterns_exclude": [
     ],
@@ -32,7 +34,7 @@
     "subset_len": null,
     "val_subset_len": null,
     "calculate_epoch_loss": true,
-    "num_workers": 4,
+    "num_workers": 8,
     "data_augmentation": {
       "max_shift": 20,
       "angle_sigma": 2,
@@ -49,7 +51,7 @@
     },
     "stop_criteria": {
       "loss": null,
-      "epoch": 150
+      "epoch": 100
     }
   },
   "data": {
