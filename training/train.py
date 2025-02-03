@@ -68,7 +68,7 @@ def calculate_loss(model, data, batch_size=32, num_workers=0):
             gt_data = gt_data.to(device)
             gt_data.requires_grad = False
 
-            curr_loss = model(img1, img2, gt=gt_data)
+            curr_loss = model(img1, img2, gt=gt_data)["loss"]
             curr_count = img1.shape[0]
             loss += curr_loss * curr_count
             count += curr_count
@@ -148,6 +148,7 @@ def train(model_conf, train_conf, data_conf):
         tail_blocks=head_conf["tail_blocks"],
         backbone=model_conf["backbone"]["name"],
         backbone_weights=model_conf["backbone"]["pretrained_weights"],
+        offset_activation=head_conf.get("offset_activation"),
     ).to(device)
 
     lr = train_conf["lr"]
@@ -241,15 +242,19 @@ def train(model_conf, train_conf, data_conf):
             gt_data = gt_data.to(device)
             gt_data.requires_grad = False
 
-            loss = model(img1, img2, gt=gt_data)
+            losses = model(img1, img2, gt=gt_data)
+            loss = losses["loss"]
             optimizer.zero_grad()  # compute gradient and do optimize step
             loss.backward()
 
             optimizer.step()
             loss_value = loss.item()
+            loss_offset = losses["loss_offset"].item()
             curr_lr = [optimizer.param_groups[0]["lr"], optimizer.param_groups[1]["lr"]]
             lr_to_show = curr_lr[0] if len(curr_lr) == 1 else curr_lr
-            print(f"Epoch {epoch}, batch {i}, loss={loss_value:.3f}, lr={lr_to_show}")
+            print(
+                f"Epoch {epoch}, batch {i}, loss={loss_value:.3f}, loss_offset={loss_offset:.3f}, lr={lr_to_show}"
+            )
 
         lr_backbone_history.append(curr_lr[0])
         lr_head_history.append(curr_lr[1])

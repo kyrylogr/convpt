@@ -49,9 +49,10 @@ class SiamPTLoss(nn.Module):
     def forward(self, gt_cls_offset, pred_cls, pred_offset):
         gt_cls = torch.unsqueeze(gt_cls_offset[:, 0, :, :], dim=1)
         gt_offset = gt_cls_offset[:, 1:, :, :]
-        focal_l = self.focal_loss(gt_cls, pred_cls)
-        offset_l = self.l1_loss(gt_cls.gt(0.0), gt_offset, pred_offset)
-        return focal_l * self.lambda_cls + offset_l * self.lambda_offset
+        loss_cls = self.focal_loss(gt_cls, pred_cls)
+        loss_offset = self.l1_loss(gt_cls.eq(1.0), gt_offset, pred_offset)
+        loss = loss_cls * self.lambda_cls + loss_offset * self.lambda_offset
+        return {"loss": loss, "loss_cls": loss_cls, "loss_offset": loss_offset}
 
 
 class SiamPTNet(nn.Module):
@@ -61,11 +62,13 @@ class SiamPTNet(nn.Module):
         head_channels: int = 256,
         corr_channels: int = 64,
         tail_blocks: int = 3,
+        offset_activation: str = "",
         backbone: str = "efficientnet_b0",
         backbone_weights: str = "DEFAULT",
         pre_encoder: int = True,
     ):
         super().__init__()
+        self.offset_activation = offset_activation
         self.backbone = create_backbone(backbone, backbone_weights)
         self.backbone_output_block_no = [2, 4, 8, 16, 32].index(result_stride)
         assert self.backbone_output_block_no >= 0
@@ -103,6 +106,10 @@ class SiamPTNet(nn.Module):
         cls = self.head_class(z, x)
         cls = torch.sigmoid(cls)
         offsets = self.head_offset(z, x)
+        if self.offset_activation == "tanh":
+            offsets = torch.tanh(offsets)
+        else:
+            assert not self.offset_activation
         if gt is None:
             return cls, offsets
         else:
