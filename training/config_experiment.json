@@ -15,7 +15,7 @@
       "channels": 256,
       "tail_blocks": 3,
       "corr_channels": 144,
-      "offset_activation": "tanh"
+      "offset_activation": ""
     },
     "size_template": 192,
     "size_search": 256,
