@@ -113,11 +113,12 @@ def train(model_conf, train_conf, data_conf):
     torch.manual_seed(42)
 
     min_size = max(data_conf.get("image_minsize", 0), model_conf["size_search"])
-
+    print('filtering images...')
     image_files = filter_color_imgfiles_min_size(data_conf["image_folder"], min_size)
+    print(f'done. {len(image_files)} selected.')
     random.shuffle(image_files)
     images_count = len(image_files)
-    train_ratio = data_conf.get("train_val_split", 0.5)
+    train_ratio = data_conf.get("train_val_split", 0.8)
     train_images_count = round(images_count * train_ratio)
     train_imagefiles = image_files[:train_images_count]
     val_imagefiles = image_files[train_images_count:]
