@@ -98,17 +98,17 @@ def filter_color_imgfiles_min_size(folder, minsize, max_images=0):
     """returns list of imagefile paths from the folder if it satisfies minsize.
     Currently only imagefiles should be in input folder.
     """
-    count = 0
+    processed = 0
 
     def fits(fpath):
-        if max_images!=0 and count==max_images:
+        nonlocal processed
+        if max_images!=0 and processed==max_images:
             return False
         img = cv.imread(fpath)
         s = img.shape
         is_ok = len(s) == 3 and s[0] >= minsize and s[1] >= minsize
-        nonlocal count
         if is_ok:
-            count += 1
+            processed += 1
         return is_ok
 
     file_paths = [os.path.join(folder, fname) for fname in os.listdir(folder)]

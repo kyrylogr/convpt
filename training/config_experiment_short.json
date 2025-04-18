@@ -63,6 +63,6 @@
     "image_folder": "../VOC/VOCdevkit/VOC2007/JPEGImages",
     "train_val_split": 0.5,
     "image_minsize": 330,
-    "image_count": 0
+    "image_count": 128
   }
 }
