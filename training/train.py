@@ -150,6 +150,7 @@ def train(model_conf, train_conf, data_conf):
         backbone=model_conf["backbone"]["name"],
         backbone_weights=model_conf["backbone"]["pretrained_weights"],
         offset_activation=head_conf.get("offset_activation"),
+        offset_scale=head_conf.get("offset_scale", 1)
     ).to(device)
 
     lr = train_conf["lr"]
@@ -208,7 +209,7 @@ def train(model_conf, train_conf, data_conf):
     model.train(True)
 
     batch_generator_train = torch.utils.data.DataLoader(
-        train_data, num_workers=num_workers, batch_size=batch_size, shuffle=True
+        train_data, num_workers=num_workers, batch_size=batch_size, shuffle=True, drop_last=True
     )
 
     epoch = 1
