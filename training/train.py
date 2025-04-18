@@ -114,7 +114,8 @@ def train(model_conf, train_conf, data_conf):
 
     min_size = max(data_conf.get("image_minsize", 0), model_conf["size_search"])
     print('filtering images...')
-    image_files = filter_color_imgfiles_min_size(data_conf["image_folder"], min_size)
+    image_files = filter_color_imgfiles_min_size(
+        data_conf["image_folder"], min_size, max_images=data_conf["image_count"])
     print(f'done. {len(image_files)} selected.')
     random.shuffle(image_files)
     images_count = len(image_files)
