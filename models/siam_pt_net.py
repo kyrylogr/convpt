@@ -67,6 +67,7 @@ class SiamPTNet(nn.Module):
         backbone: str = "efficientnet_b0",
         backbone_weights: str = "DEFAULT",
         pre_encoder: bool = True,
+        post_corr_relu: bool = True,
         lambda_cls=1.0, lambda_offset=1.0
     ):
         super().__init__()

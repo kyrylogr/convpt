@@ -146,6 +146,7 @@ def train(model_conf, train_conf, data_conf):
         head_channels=head_conf["channels"],
         corr_channels=head_conf["corr_channels"],
         pre_encoder=head_conf.get("pre_correlation_block"),
+        post_corr_relu=head_conf.get("post_corr_relu"),
         tail_blocks=head_conf["tail_blocks"],
         backbone=model_conf["backbone"]["name"],
         backbone_weights=model_conf["backbone"]["pretrained_weights"],
@@ -225,6 +226,7 @@ def train(model_conf, train_conf, data_conf):
 
     calculate_epoch_loss = train_conf.get("calculate_epoch_loss")
     save_best_model = train_conf.get("save_best_model", True)
+    save_best_model_skip_epochs = train_conf.get("save_best_model_skip_epochs", 0)
 
     while True:
         epoch_start = time.perf_counter()
@@ -273,7 +275,7 @@ def train(model_conf, train_conf, data_conf):
             )
             if val_loss_history[-1] < best_val_loss:
                 best_val_loss = val_loss_history[-1]
-                if save_best_model:
+                if save_best_model and save_best_model_skip_epochs < epoch:
                     save_model(
                         model,
                         model_conf["weights_path"],

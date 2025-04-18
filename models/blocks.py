@@ -76,6 +76,7 @@ class CorrelationHead(nn.Module):
         in_channels: int,
         pre_encoder: bool = True,
         num_corr_channels: int = 64,
+        post_corr_relu: bool = True,
         post_corr_encoder: bool = True,
         tail_blocks: int = 3,
         result_channels: int = 1,
@@ -84,6 +85,7 @@ class CorrelationHead(nn.Module):
         self.pre_encoder = (
             sepconv_bn_relu(in_channels, in_channels) if pre_encoder else None
         )
+        self.post_corr_relu = post_corr_relu
         self.correlation = PointwiseCorrelation()
         if post_corr_encoder:
             self.post_corr_encoder_corr = sepconv_bn_relu(
@@ -100,6 +102,8 @@ class CorrelationHead(nn.Module):
         if self.pre_encoder is not None:
             x = self.pre_encoder(x)
         x_corr = self.correlation(z, x)
+        if self.post_corr_relu:
+            x_corr = nn.functional.relu(x_corr)
         if self.post_corr_encoder_corr is not None:
             x_corr = self.post_corr_encoder_corr(x_corr)
         if self.post_corr_encoder_feature is not None:
