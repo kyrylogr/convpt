@@ -150,7 +150,9 @@ def train(model_conf, train_conf, data_conf):
         backbone=model_conf["backbone"]["name"],
         backbone_weights=model_conf["backbone"]["pretrained_weights"],
         offset_activation=head_conf.get("offset_activation"),
-        offset_scale=head_conf.get("offset_scale", 1)
+        offset_scale=head_conf.get("offset_scale", 1),
+        lambda_offset=head_conf.get("lambda_offset", 1),
+        lambda_cls=head_conf.get("lambda_cls", 1),
     ).to(device)
 
     lr = train_conf["lr"]

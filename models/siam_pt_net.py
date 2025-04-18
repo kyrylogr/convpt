@@ -67,6 +67,7 @@ class SiamPTNet(nn.Module):
         backbone: str = "efficientnet_b0",
         backbone_weights: str = "DEFAULT",
         pre_encoder: bool = True,
+        lambda_cls=1.0, lambda_offset=1.0
     ):
         super().__init__()
         self.offset_activation = offset_activation
@@ -95,7 +96,9 @@ class SiamPTNet(nn.Module):
             tail_blocks=tail_blocks,
             result_channels=2,
         )
-        self.loss = SiamPTLoss()
+        self.loss = SiamPTLoss(
+            lambda_cls=lambda_cls, lambda_offset=lambda_offset
+        )
 
     def get_features(self, x):
         x_f = self.backbone(x)
