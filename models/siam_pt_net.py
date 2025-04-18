@@ -66,7 +66,7 @@ class SiamPTNet(nn.Module):
         offset_scale: float = 1.,
         backbone: str = "efficientnet_b0",
         backbone_weights: str = "DEFAULT",
-        pre_encoder: int = True,
+        pre_encoder: bool = True,
     ):
         super().__init__()
         self.offset_activation = offset_activation
