@@ -33,15 +33,15 @@ class SepConv(nn.Module):
         return self.pointwise(x)
 
 
-def sepconv_bn_relu(in_channels: int, out_channels: int, kernel_size=3):
+def sepconv_bn_relu(in_channels: int, out_channels: int, kernel_size=3, *, bias=False):
     return nn.Sequential(
-        SepConv(in_channels, out_channels, kernel_size),
+        SepConv(in_channels, out_channels, kernel_size, bias=bias),
         nn.BatchNorm2d(out_channels),
         nn.ReLU(),
     )
 
 
-def sepconv_bn_relu_times_n(in_channels: int, kernel_size: int, n: int):
+def sepconv_bn_relu_times_n(in_channels: int, kernel_size: int, n: int, *, bias=False):
     return nn.Sequential(
         *[sepconv_bn_relu(in_channels, in_channels, kernel_size) for i in range(n)]
     )
