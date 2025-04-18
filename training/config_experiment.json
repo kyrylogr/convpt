@@ -15,7 +15,8 @@
       "channels": 256,
       "tail_blocks": 3,
       "corr_channels": 144,
-      "offset_activation": ""
+      "offset_activation": "",
+      "offset_scale": 1
     },
     "size_template": 192,
     "size_search": 256,
