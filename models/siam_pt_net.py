@@ -63,12 +63,14 @@ class SiamPTNet(nn.Module):
         corr_channels: int = 64,
         tail_blocks: int = 3,
         offset_activation: str = "",
+        offset_scale: float = 1.,
         backbone: str = "efficientnet_b0",
         backbone_weights: str = "DEFAULT",
         pre_encoder: int = True,
     ):
         super().__init__()
         self.offset_activation = offset_activation
+        self.offset_scale = offset_scale
         self.backbone = create_backbone(backbone, backbone_weights)
         self.backbone_output_block_no = [2, 4, 8, 16, 32].index(result_stride)
         assert self.backbone_output_block_no >= 0
@@ -110,6 +112,8 @@ class SiamPTNet(nn.Module):
             offsets = torch.tanh(offsets)
         else:
             assert not self.offset_activation
+        if self.offset_scale != 1.:
+            offsets = offsets * self.offset_scale
         if gt is None:
             return cls, offsets
         else:
