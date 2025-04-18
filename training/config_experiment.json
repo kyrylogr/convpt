@@ -16,7 +16,9 @@
       "tail_blocks": 3,
       "corr_channels": 144,
       "offset_activation": "",
-      "offset_scale": 1
+      "offset_scale": 1,
+      "lambda_cls": 1.0,
+      "lambda_offset": 1.0
     },
     "size_template": 192,
     "size_search": 256,
